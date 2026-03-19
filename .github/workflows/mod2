@@ -1,6 +1,7 @@
 Public y As Double, m As Double, D As Double, h As Double, min As Double, s As Double, n As Double, c As Double, r As Double
 Public g As Double, preS As Double, p As Double, IsRunning As Boolean, tow(1 To 550, 1 To 910) As Double, thow(1 To 550, 1 To 910) As Double, tho(1 To 550, 1 To 910) As Double, th(1 To 550, 1 To 910) As Double, yhow(1 To 540, 1 To 900) As Double
 Public A As Double, b As Double, F As Double, E As Double, yed As Byte, M4A As Double, M5A(1 To 540, 1 To 900) As Double, tos(1 To 540, 1 To 900) As Double, tw As Integer, edu As Integer, jes As Integer, yoyo(1 To 900, 1 To 540, 1 To 100) As Long
+
 ' 如果是 64 位元 Office (現在多數人的版本)
 #If VBA7 Then
     Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
@@ -8,3 +9,35 @@ Public A As Double, b As Double, F As Double, E As Double, yed As Byte, M4A As D
 #Else
     Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 #End If
+Option Explicit
+
+' GDI+ 基礎結構
+Public Type GdiplusStartupInput
+    GdiplusVersion As Long
+    DebugEventCallback As Long
+    SuppressBackgroundThread As Long
+    SuppressExternalCodecs As Long
+End Type
+
+' API 宣告
+#If Win64 Then
+    Declare PtrSafe Function GdiplusStartup Lib "gdiplus" (ByRef token As LongPtr, ByRef inputbuf As GdiplusStartupInput, ByVal outputbuf As LongPtr) As Long
+    Declare PtrSafe Sub GdiplusShutdown Lib "gdiplus" (ByVal token As LongPtr)
+    Declare PtrSafe Function GdipCreateFromHDC Lib "gdiplus" (ByVal hdc As LongPtr, ByRef graphics As LongPtr) As Long
+    Declare PtrSafe Function GdipDeleteGraphics Lib "gdiplus" (ByVal graphics As LongPtr) As Long
+    Declare PtrSafe Function GdipCreateSolidFill Lib "gdiplus" (ByVal ARGB As Long, ByRef brush As LongPtr) As Long
+    Declare PtrSafe Function GdipDeleteBrush Lib "gdiplus" (ByVal brush As LongPtr) As Long
+    Declare PtrSafe Function GdipFillRectangle Lib "gdiplus" (ByVal graphics As LongPtr, ByVal brush As LongPtr, ByVal X As Single, ByVal Y As Single, ByVal Width As Single, ByVal Height As Single) As Long
+    Declare PtrSafe Function GetDC Lib "user32" (ByVal hWnd As LongPtr) As LongPtr
+    Declare PtrSafe Function ReleaseDC Lib "user32" (ByVal hWnd As LongPtr, ByVal hdc As LongPtr) As Long
+#Else
+    ' 32位元版本略，結構相同但使用 Long 與無 PtrSafe
+#End If
+
+Function ConvertToARGB(ByVal vbaColor As Long, Optional ByVal Alpha As Byte = 255) As Long
+    Dim R As Long, G As Long, B As Long
+    R = vbaColor And &HFF
+    G = (vbaColor \ &H100) And &HFF
+    B = (vbaColor \ &H10000) And &HFF
+    ConvertToARGB = (CLng(Alpha) * &H1000000) Or (R * &H10000) Or (G * &H100) Or B
+End Function
